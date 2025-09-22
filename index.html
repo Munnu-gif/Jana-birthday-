@@ -167,7 +167,33 @@ const musicBtn = document.getElementById('musicBtn');
 const bgMusic = document.getElementById('bgMusic');
 const wishesList = document.getElementById('wishesList');
 
-let images = [];
+let images = [];// --- START: repo-hosted images (edit filenames as uploaded) ---
+let images = []; // existing variable used by slideshow
+
+// If you uploaded photos to the repo's "images" folder: list them here.
+// Example: images/pic1.jpg, images/pic2.jpg etc.
+const hostedImages = [
+  'images/pic1.jpg',
+  'images/pic2.jpg',
+  'images/pic3.jpg'
+];
+
+// If you filled hostedImages, use them and disable the uploader (so visitors see same photos)
+if(hostedImages.length){
+  images = hostedImages.slice();
+  // show first photo immediately
+  try { showThumb(0); } catch(e) {}
+  // disable uploader UI so photos cannot be changed from browser
+  const uploaderLabel = document.getElementById('uploaderLabel');
+  const imagesInput = document.getElementById('imagesInput');
+  if(uploaderLabel) uploaderLabel.classList.add('disabled');
+  if(imagesInput) imagesInput.disabled = true;
+  // optional small note
+  const thumb = document.getElementById('thumb');
+  if(thumb) thumb.insertAdjacentHTML('afterend',
+    '<div style="font-size:12px;color:var(--muted);margin-top:6px">Photos loaded from the site (repo). To change, update the images in the repository.</div>');
+}
+// --- END: repo-hosted images ---
 let slideIndex = 0;
 let slideTimer = null;
 
