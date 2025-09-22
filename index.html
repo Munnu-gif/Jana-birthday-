@@ -175,7 +175,46 @@ let images = []; // existing variable used by slideshow
 const hostedImages = [
   'images/pic1.jpg',
   'images/pic2.jpg',
-  'images/pic3.jpg'
+  'images/pic3.jpg'// Slideshow ke liye photos list
+const hostedImages = [
+  "images/pic1.jpg",
+  "images/pic2.jpg",
+  "images/pic3.jpg",
+  "images/pic4.jpg",
+  "images/pic5.jpg",
+  "images/pic6.jpg",
+  "images/pic7.jpg",
+  "images/pic8.jpg",
+  "images/pic9.jpg",
+  "images/pic10.jpg",
+  "images/pic11.jpg",
+  "images/pic12.jpg",
+  "images/pic13.jpg",
+  "images/pic14.jpg",
+  "images/pic15.jpg"
+];
+
+// Slideshow ka logic
+let slideIndex = 0;
+let slideInterval;
+
+function showSlides() {
+  const thumb = document.getElementById("thumb");
+  thumb.innerHTML = `<img src="${hostedImages[slideIndex]}" style="max-width:100%;border-radius:15px;box-shadow:0 0 15px rgba(0,0,0,0.4)">`;
+  slideIndex = (slideIndex + 1) % hostedImages.length;
+}
+
+document.getElementById("playBtn").addEventListener("click", () => {
+  if (!slideInterval) {
+    showSlides();
+    slideInterval = setInterval(showSlides, 2500); // 2.5 sec per image
+  }
+});
+
+document.getElementById("stopBtn").addEventListener("click", () => {
+  clearInterval(slideInterval);
+  slideInterval = null;
+});
 ];
 
 // If you filled hostedImages, use them and disable the uploader (so visitors see same photos)
