@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Happy Birthday — Interactive Card</title>
+<style>
+  :root{
+    --bg1:#071029;
+    --bg2:#071b2f;
+    --card:#071226;
+    --accent:#ff6b6b;
+    --accent2:#ffd166;
+    --muted:#9aa5b1;
+    --glass: rgba(255,255,255,0.04);
+  }
+  html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#eef2ff;-webkit-font-smoothing:antialiased}
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{width:980px;max-width:98%;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;box-shadow:0 20px 60px rgba(2,6,23,0.7);overflow:hidden;position:relative}
+  header{padding:18px 22px;display:flex;gap:12px;align-items:center}
+  .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#ff9f43);display:flex;align-items:center;justify-content:center;font-weight:800;color:#071029}
+  .title h1{margin:0;font-size:18px}
+  .title p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+  .celebrate-tag{font-size:13px;color:var(--muted)}
+  .body{display:grid;grid-template-columns:1fr 380px;gap:18px;padding:16px}
+  @media (max-width:980px){.body{grid-template-columns:1fr;}}
+  .left{padding:16px}
+  .input-row{display:flex;gap:10px;align-items:center}
+  input[name=name]{flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;font-size:16px}
+  button#start{padding:11px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),#ff9f43);color:#071029;font-weight:700;cursor:pointer}
+  .greeting{margin-top:18px;min-height:120px;display:flex;align-items:center;justify-content:center}
+  .greet-text{font-size:30px;font-weight:800;letter-spacing:0.4px;text-align:center}
+  .sub{margin-top:8px;color:var(--muted);text-align:center}
+  .wish{margin-top:18px;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.015));border:1px solid rgba(255,255,255,0.03);display:none}
+  .wish p{margin:0;font-size:15px;line-height:1.5}
+  .cake-wrap{display:flex;justify-content:center;margin-top:18px;display:none}
+  .cake{width:240px;height:180px;position:relative}
+  .cake .layer{position:absolute;left:50%;transform:translateX(-50%);border-radius:18px}
+  .cake .layer.bottom{width:220px;height:80px;background:#6b2d2d;bottom:0;box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+  .cake .layer.middle{width:180px;height:64px;background:#ffb4b4;bottom:44px}
+  .cake .layer.top{width:140px;height:52px;background:#ffdede;bottom:90px}
+  .candle{position:absolute;left:50%;transform:translateX(-50%);bottom:146px;width:10px;height:36px;background:#ffee88;border-radius:4px}
+  .flame{position:absolute;left:50%;transform:translateX(-50%);bottom:176px;width:20px;height:26px;border-radius:50% 50% 40% 40%;background: radial-gradient(circle at 30% 30%, #fff176 0%, #ffb74d 40%, #ff7043 70%);animation:flicker 700ms infinite}
+  @keyframes flicker{0%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(0.92)}100%{transform:translateX(-50%) scale(1)}}
+  .right{background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));padding:16px;border-left:1px solid rgba(255,255,255,0.02);display:flex;flex-direction:column;gap:12px}
+  .uploader{border:2px dashed rgba(255,255,255,0.04);padding:12px;border-radius:10px;text-align:center;cursor:pointer}
+  .uploader.disabled{opacity:0.6;cursor:default}
+  .uploader input{display:none}
+  .thumb{width:100%;height:260px;border-radius:10px;overflow:hidden;background:#071422;display:flex;align-items:center;justify-content:center}
+  .thumb img{max-width:100%;max-height:100%;object-fit:cover}
+  .controls{display:flex;gap:8px}
+  .controls button{flex:1;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:inherit;cursor:pointer}
+  .final{padding:18px;text-align:center;border-top:1px solid rgba(255,255,255,0.02);display:none}
+  .final h2{margin:0;font-size:32px}
+  .final p{margin:8px 0 0;color:var(--muted)}
+  footer{padding:10px 18px;text-align:center;color:var(--muted);font-size:13px}
+  /* fireworks canvas */
+  #fx{position:absolute;inset:0;pointer-events:none;z-index:5}
+  /* animated wishes list */
+  .wishes{margin-top:12px;display:flex;flex-direction:column;gap:8px;align-items:center}
+  .wish-pill{padding:10px 14px;border-radius:999px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);font-weight:700}
+  .sparkle {display:inline-block;transform-origin:center;animation:pop 1200ms infinite;}
+  @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+  /* small responsiveness */
+  @media (max-width:600px){.greet-text{font-size:22px}.cake{width:180px;height:140px}.thumb{height:200px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" role="main" aria-label="Interactive birthday card">
+    <canvas id="fx"></canvas>
+    <header>
+      <div class="logo">HB</div>
+      <div class="title">
+        <h1>Interactive Birthday Card</h1>
+        <p>Make it personal — type her name and enjoy the surprise.</p>
+      </div>
+      <div class="celebrate-tag">27 Sept celebration 🎉</div>
+    </header>
+
+    <div class="body">
+      <div class="left">
+        <div class="input-row">
+          <input id="nameInput" name="name" placeholder="Enter her name..." aria-label="Name input">
+          <button id="start">Surprise!</button>
+        </div>
+
+        <div class="greeting" id="greetingArea">
+          <div>
+            <div class="greet-text" id="greetText">Type her name and press "Surprise!" ✨</div>
+            <div class="sub">Pro tip: Ask her to type her own name on the page for extra cuteness 😄</div>
+          </div>
+        </div>
+
+        <div class="wish" id="wishBlock">
+          <p id="wishText">—</p>
+          <div class="wishes" id="wishesList" aria-hidden="true">
+            <!-- wishes added by JS -->
+          </div>
+        </div>
+
+        <div class="cake-wrap" id="cakeBlock" aria-hidden="true">
+          <div class="cake" aria-hidden="true">
+            <div class="layer bottom"></div>
+            <div class="layer middle"></div>
+            <div class="layer top"></div>
+            <div class="candle"></div>
+            <div class="flame"></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="right">
+        <label class="uploader" id="uploaderLabel">
+          <div>Tap to choose photos (or drag & drop) <br><small>(select multiple)</small></div>
+          <input id="imagesInput" type="file" accept="image/*" multiple aria-label="Upload photos">
+        </label>
+
+        <div class="thumb" id="thumb">
+          <div style="text-align:center;color:var(--muted)">No photos yet — add a few to make a slideshow</div>
+        </div>
+
+        <div class="controls">
+          <button id="playBtn">Play Slideshow</button>
+          <button id="stopBtn">Stop</button>
+        </div>
+
+        <div style="font-size:13px;color:var(--muted);">Tip: After uploading, press "Surprise!" and then "Play Slideshow"</div>
+
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button id="musicBtn" style="flex:1;padding:10px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--accent2),#ffd9a6);font-weight:700;cursor:pointer">Play Music</button>
+        </div>
+      </aside>
+    </div>
+
+    <div class="final" id="finalSection">
+      <h2 id="finalTitle">Happy Birthday</h2>
+      <p id="finalNote">Wishing you a day full of love, laughter & magic — with all my heart ❤️</p>
+    </div>
+
+    <footer>Made with love — Open this file in any browser. Customize text or images as you like.</footer>
+  </div>
+</div>
+
+<!-- optional audio (not autoplay) -->
+<audio id="bgMusic" loop preload="auto">
+  <!-- no src prefilled; you can drag an mp3 to your repo and set src via JS or edit here -->
+</audio>
+
+<script>
+/* ----------------------------
+  Helpers & DOM refs
+   ---------------------------- */
+const nameInput = document.getElementById('nameInput');
+const startBtn = document.getElementById('start');
+const greetText = document.getElementById('greetText');
+const wishBlock = document.getElementById('wishBlock');
+const wishText = document.getElementById('wishText');
+const cakeBlock = document.getElementById('cakeBlock');
+const finalSection = document.getElementById('finalSection');
+const imagesInput = document.getElementById('imagesInput');
+const thumb = document.getElementById('thumb');
+const playBtn = document.getElementById('playBtn');
+const stopBtn = document.getElementById('stopBtn');
+const uploaderLabel = document.getElementById('uploaderLabel');
+const musicBtn = document.getElementById('musicBtn');
+const bgMusic = document.getElementById('bgMusic');
+const wishesList = document.getElementById('wishesList');
+
+let images = [];
+let slideIndex = 0;
+let slideTimer = null;
+
+/* ----------------------------
+  Escape HTML
+   ---------------------------- */
+function escapeHtml(unsafe){
+  if(!unsafe) return '';
+  return unsafe.replace(/[&<>\"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":\"&#039;\"}[m];});
+}
+
+/* ----------------------------
+  Surprise action
+   ---------------------------- */
+startBtn.addEventListener('click', ()=>{
+  const name = (nameInput.value || '').trim();
+  const displayName = name || 'Jana';
+  // greeting
+  greetText.innerHTML = `🎈 <span style="color:var(--accent)">${escapeHtml(displayName)}</span>, this one's for you!`;
+  // show wish block & cake
+  wishBlock.style.display = 'block';
+  cakeBlock.style.display = 'flex';
+  finalSection.style.display = 'block';
+  // romantic wish
+  wishText.innerHTML = `Dear <strong>${escapeHtml(displayName)}</strong>, every moment with you is my favourite — may your day be bright and your year full of love and fun.`;
+  // final title
+  document.getElementById('finalTitle').innerText = `Happy Birthday, ${displayName}!`;
+  // build wishes below (some requested ones + additional)
+  buildWishes(displayName);
+  // animate title
+  const ttl = document.querySelector('.greet-text');
+  ttl.animate([{transform:'scale(1)'},{transform:'scale(1.04)'},{transform:'scale(1)'}],{duration:1200,iterations:2});
+  // fireworks/confetti
+  spawnBigShow();
+});
+
+/* ----------------------------
+  Wishes builder
+   ---------------------------- */
+function buildWishes(name){
+  wishesList.innerHTML = ''; wishesList.setAttribute('aria-hidden','false');
+  const lines = [
+    `🎉 Happy Birthday, Jana`,
+    `🎂 Happy Birthday, Munnu ji`,
+    `👑 Happy Birthday, Mine Queen`,
+    `🎊 Happy Birthday Boss`,
+    `🥳 Happy Birthday, Mine Princess`,
+    `💖 Happy Birthday, Meri pyaari si Sehzadii ji`,
+    `Hamesha khush rehna — har din tumhari zindagi me rang bhare.`,
+    `May your smile stay forever — I pray for your happiness, success and love.`
+  ];
+  lines.forEach((txt, i)=>{
+    const el = document.createElement('div');
+    el.className = 'wish-pill';
+    if(i<6) el.innerHTML = `<span class="sparkle">${txt}</span>`;
+    else el.textContent = txt;
+    wishesList.appendChild(el);
+  });
+}
+
+/* ----------------------------
+  Images uploader & slideshow
+   - after files chosen, we disable uploader (so user can't remove)
+   ---------------------------- */
+imagesInput.addEventListener('change', (e)=>{
+  const files = Array.from(e.target.files).filter(f=>f.type.startsWith('image/')).slice(0,30);
+  if(files.length===0) return;
+  // read files
+  const readers = files.map(f=>new Promise((res,rej)=>{
+    const r = new FileReader(); r.onload = ()=>res(r.result); r.onerror = rej; r.readAsDataURL(f);
+  }));
+  Promise.all(readers).then(results=>{
+    images = results;
+    // show first thumb
+    showThumb(0);
+    // disable uploader so images can't be removed
+    uploaderLabel.classList.add('disabled');
+    imagesInput.disabled = true;
+    // give subtle note
+    thumb.insertAdjacentHTML('afterend','<div style="font-size:12px;color:var(--muted);margin-top:6px">Photos set — they cannot be removed from slideshow while on this device (to change, re-upload a new index.html or edit repository).</div>');
+  });
+});
+
+function showThumb(i){
+  if(!images.length){
+    thumb.innerHTML = '<div style="text-align:center;color:var(--muted)">No photos yet — add a few to make a slideshow</div>';
+    return;
+  }
+  slideIndex = i % images.length;
+  thumb.innerHTML = `<img src="${images[slideIndex]}" alt="photo ${slideIndex+1}">`;
+}
+
+/* slideshow controls */
+playBtn.addEventListener('click', ()=>{
+  if(!images.length) return alert('Please upload photos first.');
+  if(slideTimer) clearInterval(slideTimer);
+  showThumb(0);
+  slideTimer = setInterval(()=>{ slideIndex = (slideIndex+1)%images.length; showThumb(slideIndex); }, 2500);
+});
+stopBtn.addEventListener('click', ()=>{ if(slideTimer) clearInterval(slideTimer); slideTimer=null; });
+
+/* ----------------------------
+  Music button (user-triggered)
+   ---------------------------- */
+musicBtn.addEventListener('click', ()=>{
+  // by default no src - you can edit the file to include a music src or host an mp3 in repo and set bgMusic.src
+  if(!bgMusic.src){
+    // gentle default beep via WebAudio if no file provided
+    playTinyMelody();
+    musicBtn.innerText = 'Music Playing';
+    setTimeout(()=>musicBtn.innerText = 'Play Music', 2500);
+    return;
+  }
+  if(bgMusic.paused) { bgMusic.play(); musicBtn.innerText = 'Music Playing'; }
+  else { bgMusic.pause(); musicBtn.innerText = 'Play Music'; }
+});
+
+/* tiny melody fallback */
+function playTinyMelody(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.0001, now);
+    o.type='sine'; o.frequency.setValueAtTime(880, now);
+    g.gain.exponentialRampToValueAtTime(0.2, now+0.02);
+    o.start(now);
+    o.frequency.exponentialRampToValueAtTime(440, now+0.4);
+    g.gain.exponentialRampToValueAtTime(0.0001, now+1.4);
+    o.stop(now+1.45);
+  }catch(e){ /* ignore */ }
+}
+
+/* ----------------------------
+  Fireworks & confetti
+  Simple canvas particle system
+   ---------------------------- */
+const canvas = document.getElementById('fx');
+const ctx = canvas.getContext('2d');
+let particles = [], fireworks = [];
+function resize(){ canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+window.addEventListener('resize', resize); resize();
+
+function spawnBigShow(){
+  spawnConfetti(160);
+  // spawn a few fireworks
+  for(let i=0;i<8;i++){
+    setTimeout(()=>spawnFirework(Math.random()*canvas.width*0.8+canvas.width*0.1, Math.random()*canvas.height*0.5+50), i*220);
+  }
+  // start renderer
+  if(!animating) { animating=true; requestAnimationFrame(render); }
+}
+let animating=false;
+function spawnConfetti(n=120){
+  const colors=['#ff6b6b','#ffd166','#6bcB77','#4dabf7','#c77dff'];
+  for(let i=0;i<n;i++){
+    particles.push({
+      x: Math.random()*canvas.width,
+      y: -Math.random()*canvas.height,
+      w: 6+Math.random()*12,
+      h: 6+Math.random()*12,
+      vx: -2+Math.random()*4,
+      vy: 2+Math.random()*6,
+      rot: Math.random()*360,
+      vr: -5+Math.random()*10,
+      col: colors[Math.floor(Math.random()*colors.length)],
+      life: 0
+    });
+  }
+}
+
+function spawnFirework(tx, ty){
+  // rocket
+  const sx = Math.random()*canvas.width;
+  const sy = canvas.height + 20;
+  const vx = (tx - sx) / 40;
+  const vy = (ty - sy) / 40;
+  fireworks.push({x:sx,y:sy,vx,vy,ttl:40,tx,ty});
+}
+
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // fireworks rockets
+  for(let i=fireworks.length-1;i>=0;i--){
+    const f = fireworks[i];
+    f.x += f.vx; f.y += f.vy; f.ttl--;
+    // draw rocket
+    ctx.beginPath(); ctx.arc(f.x, f.y, 3,0,Math.PI*2); ctx.fillStyle='white'; ctx.fill();
+    if(f.ttl<=0){
+      // explode into many particles
+      const count = 40 + Math.floor(Math.random()*60);
+      for(let k=0;k<count;k++){
+        const ang = Math.random()*Math.PI*2;
+        const sp = 2+Math.random()*6;
+        particles.push({
+          x: f.x,
+          y: f.y,
+          vx: Math.cos(ang)*sp,
+          vy: Math.sin(ang)*sp,
+          w: 3+Math.random()*5,
+          h: 3+Math.random()*5,
+          rot: Math.random()*360,
+          vr: -3+Math.random()*6,
+          col: `hsl(${Math.random()*360}deg 100% 65%)`,
+          life: 0
+        });
+      }
+      fireworks.splice(i,1);
+    }
+  }
+  // particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.rot += p.vr; p.life++;
+    ctx.save();
+    ctx.translate(p.x, p.y); ctx.rotate(p.rot*Math.PI/180);
+    ctx.fillStyle = p.col || '#fff';
+    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+    ctx.restore();
+    if(p.y > canvas.height + 60 || p.life > 220) particles.splice(i,1);
+  }
+  if(particles.length>0 || fireworks.length>0) requestAnimationFrame(render);
+  else animating=false;
+}
+
+/* ----------------------------
+  Small accessibility: Enter key triggers surprise
+   ---------------------------- */
+nameInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') startBtn.click(); });
+
+/* ----------------------------
+  End of script
+   ---------------------------- */
+</script>
+</body>
+</html>
